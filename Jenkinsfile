@@ -54,63 +54,57 @@ pipeline {
     agent any
 
     environment {
-        // Add directories where Go and Docker binaries exist
-        PATH = "/usr/local/bin:$PATH"  // Update /usr/local/bin if your binaries are elsewhere
-        APP_VERSION = '1.0.0'
+        REGISTRY    = "docker.io"                        // or your registry host
+        REPO        = "yourdockerhubusername/sample-app" // replace with your Docker Hub username/repo
+        IMAGE_TAG   = "${env.BUILD_NUMBER}"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                echo "Checking out the code"
-                checkout scm
+                git url: 'https://github.com/AK-Marshall/sample-app.git', branch: 'master'
             }
         }
 
-        stage('Build') {
+        stage('Build Go Binary') {
             steps {
-                echo "Building Go binary"
-                sh 'Go mod tidy'          // Capital G
-                sh 'Go build -o app .'    // Capital G
+                sh 'go mod tidy || true'
+                sh 'go build -o app main.go'
             }
         }
 
-        stage('Test') {
+        stage('Build Docker Image') {
             steps {
-                echo "Running tests"
-                sh 'Go test ./...'         // Capital G
+                script {
+                    docker.build("${REPO}:${IMAGE_TAG}")
+                }
             }
         }
 
-        stage('Docker Build') {
+        stage('Push Docker Image') {
             steps {
-                echo "Building Docker image"
-                sh """
-                    Docker build -t sample-app:${env.APP_VERSION} .
-                """                            // Capital D
-            }
-        }
-
-        stage('Deploy (optional)') {
-            when { branch 'dev' }             // Only deploy from dev branch
-            steps {
-                echo "Deploying Docker image (dummy step)"
-                // Uncomment and configure if pushing to a registry:
-                // sh 'Docker tag sample-app:${env.APP_VERSION} myregistry/sample-app:${env.APP_VERSION}'
-                // sh 'Docker push myregistry/sample-app:${env.APP_VERSION}'
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-cred', 
+                    usernameVariable: 'DOCKER_USER', 
+                    passwordVariable: 'DOCKER_PASS')]) {
+                    sh "echo $DOCKER_PASS | docker login ${REGISTRY} -u $DOCKER_USER --password-stdin"
+                    sh "docker push ${REPO}:${IMAGE_TAG}"
+                    sh "docker tag ${REPO}:${IMAGE_TAG} ${REPO}:latest"
+                    sh "docker push ${REPO}:latest"
+                }
             }
         }
     }
 
     post {
         always {
-            echo "Pipeline finished"
+            cleanWs()
         }
         success {
-            echo "SUCCESS: Build + Test + Docker Build succeeded"
+            echo "✅ Build + Docker image pushed: ${REPO}:${IMAGE_TAG}"
         }
         failure {
-            echo "FAILURE: Something went wrong"
+            echo "⚠️ Pipeline failed."
         }
     }
 }
