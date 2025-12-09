@@ -1,8 +1,8 @@
 pipeline {
     agent any 
-        enviornment {
-            NEW_VERSION = '1.3.0'
-        }
+    environment {
+    NEW_VERSION = '1.3.0'
+    }
 
     stages {
 
