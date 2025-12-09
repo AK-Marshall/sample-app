@@ -84,7 +84,7 @@ pipeline {
             steps {
                 echo "Building Docker image"
                 sh """
-                    docker build -t sample-app:${env.APP_VERSION} .
+                    Docker build -t sample-app:${env.APP_VERSION} .
                 """
             }
         }
