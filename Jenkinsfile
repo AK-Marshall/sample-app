@@ -54,8 +54,8 @@ pipeline {
     agent any
 
     environment {
-        REGISTRY    = "docker.io"                        // or your registry host
-        REPO        = "yourdockerhubusername/sample-app" // replace with your Docker Hub username/repo
+        REGISTRY    = "docker.io"
+        REPO        = "yourdockerhubusername/sample-app"
         IMAGE_TAG   = "${env.BUILD_NUMBER}"
     }
 
@@ -68,8 +68,13 @@ pipeline {
 
         stage('Build Go Binary') {
             steps {
-                sh 'go mod tidy || true'
-                sh 'go build -o app main.go'
+                script {
+                    // Use golang Docker image for building
+                    docker.image('golang:1.21').inside {
+                        sh 'go mod tidy'
+                        sh 'go build -o app main.go'
+                    }
+                }
             }
         }
 
@@ -84,8 +89,8 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-cred', 
-                    usernameVariable: 'DOCKER_USER', 
+                    credentialsId: 'dockerhub-cred',
+                    usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS')]) {
                     sh "echo $DOCKER_PASS | docker login ${REGISTRY} -u $DOCKER_USER --password-stdin"
                     sh "docker push ${REPO}:${IMAGE_TAG}"
