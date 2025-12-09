@@ -50,19 +50,17 @@
 
 // }
 
-
 pipeline {
     agent any
 
     environment {
-        // example version — you can override per-build if needed
-        APP_VERSION = '1.0.0'
+        APP_VERSION = '1.0.0'  // Change this per build if needed
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // pull repo from SCM (Jenkins will clone the right branch)
+                echo "Checking out the code"
                 checkout scm
             }
         }
@@ -70,15 +68,15 @@ pipeline {
         stage('Build') {
             steps {
                 echo "Building Go binary"
-                sh 'go mod tidy'              // update dependencies
-                sh 'go build -o app .'
+                sh 'Go mod tidy'          // Use your Go executable name
+                sh 'Go build -o app .'
             }
         }
 
         stage('Test') {
             steps {
-                echo "Running unit tests"
-                sh 'go test ./...'
+                echo "Running tests"
+                sh 'Go test ./...'
             }
         }
 
@@ -86,17 +84,17 @@ pipeline {
             steps {
                 echo "Building Docker image"
                 sh """
-                   docker build -t sample-app:${env.APP_VERSION} .
+                    docker build -t sample-app:${env.APP_VERSION} .
                 """
             }
         }
 
-        // optional: push or deploy
         stage('Deploy (optional)') {
-            when { branch 'dev' }   // only deploy if on dev branch — adjust as needed
+            when { branch 'dev' } // Only deploy from dev branch
             steps {
                 echo "Deploying Docker image (dummy step)"
-                // e.g. push to registry or deploy — depends on infra
+                // Uncomment and configure if pushing to a registry:
+                // sh 'docker tag sample-app:${env.APP_VERSION} myregistry/sample-app:${env.APP_VERSION}'
                 // sh 'docker push myregistry/sample-app:${env.APP_VERSION}'
             }
         }
