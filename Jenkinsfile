@@ -54,7 +54,9 @@ pipeline {
     agent any
 
     environment {
-        APP_VERSION = '1.0.0'  // Change this per build if needed
+        // Add directories where Go and Docker binaries exist
+        PATH = "/usr/local/bin:$PATH"  // Update /usr/local/bin if your binaries are elsewhere
+        APP_VERSION = '1.0.0'
     }
 
     stages {
@@ -68,15 +70,15 @@ pipeline {
         stage('Build') {
             steps {
                 echo "Building Go binary"
-                sh 'Go mod tidy'          // Use your Go executable name
-                sh 'Go build -o app .'
+                sh 'Go mod tidy'          // Capital G
+                sh 'Go build -o app .'    // Capital G
             }
         }
 
         stage('Test') {
             steps {
                 echo "Running tests"
-                sh 'Go test ./...'
+                sh 'Go test ./...'         // Capital G
             }
         }
 
@@ -85,17 +87,17 @@ pipeline {
                 echo "Building Docker image"
                 sh """
                     Docker build -t sample-app:${env.APP_VERSION} .
-                """
+                """                            // Capital D
             }
         }
 
         stage('Deploy (optional)') {
-            when { branch 'dev' } // Only deploy from dev branch
+            when { branch 'dev' }             // Only deploy from dev branch
             steps {
                 echo "Deploying Docker image (dummy step)"
                 // Uncomment and configure if pushing to a registry:
-                // sh 'docker tag sample-app:${env.APP_VERSION} myregistry/sample-app:${env.APP_VERSION}'
-                // sh 'docker push myregistry/sample-app:${env.APP_VERSION}'
+                // sh 'Docker tag sample-app:${env.APP_VERSION} myregistry/sample-app:${env.APP_VERSION}'
+                // sh 'Docker push myregistry/sample-app:${env.APP_VERSION}'
             }
         }
     }
