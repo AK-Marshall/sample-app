@@ -11,17 +11,9 @@ pipeline {
 
         stage("build") {
             steps {
-                echo "Building the application..."
-                echo "Building version ${NEW_VERSION})"
-                sh "mvn install"
             }
         }
         stage("test") {
-            when {
-                expression { 
-                    env.BRANCH_NAME == "dev"
-                    }
-            }
             steps {
                 echo "Testing the application"
             }
